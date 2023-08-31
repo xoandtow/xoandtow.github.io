@@ -50,16 +50,14 @@
         >
       </el-row>
 
-      <el-dialog title="提示" :visible.sync="dialogVisible" :width="dialogWidth">
+      <el-dialog title="请选择日期" :visible.sync="dialogVisible" :width="dialogWidth">
         <span slot="footer" class="dialog-footer">
           <el-calendar v-model="calendarValue" v-if="dialogVisible">
             <template slot="dateCell" slot-scope="{date, data}">
-              <p :class="data.isSelected ? 'is-selected' : ''">
-                {{ data.day.split('-').slice(1).join('-') }} {{ data.isSelected ? '✔️' : ''}}
-              </p>
+              <p :class="data.isSelected ? 'is-selected' : ''">{{ data.day.split('-').slice(1).join('-') }}</p>
               <p :class="data.isSelected ? 'is-selected' : ''">
                 {{ getHistoryCount(dayjs(date).format('YYYY-MM-DD')) > 0 ?
-                `抽了${getHistoryCount(dayjs(date).format('YYYY-MM-DD'))}支`: ''}}
+                `${getHistoryCount(dayjs(date).format('YYYY-MM-DD'))}支`: ''}}
               </p>
             </template>
           </el-calendar>
@@ -86,7 +84,7 @@
         dialogWidth() {
           // 根据设备屏幕宽度设置不同的宽度值
           if (window.innerWidth < 768) {
-            return '100%' // 移动设备的宽度值
+            return '140%' // 移动设备的宽度值
           } else {
             return '60%' // PC设备的宽度值
           }
@@ -108,6 +106,9 @@
               localStorage.removeItem(`smokingRecords-${date}`)
             }
           }
+          setTimeout(() => {
+            this.dialogVisible = false
+          }, 300)
         },
       },
       methods: {
