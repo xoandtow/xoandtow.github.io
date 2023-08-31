@@ -2,6 +2,7 @@
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- 本地版本 -->
     <!-- <link rel="stylesheet" type="text/css" href="../css/element-ui.css" />
   <script src="../js/vue.js"></script>
@@ -28,22 +29,28 @@
 
   <body>
     <div id="app">
-      <el-card class="box-card">
-        <div slot="header" class="clearfix">
-          <div>
-            <span>{{dayjs(calendarValue).format('YYYY-MM-DD')+'抽烟记录,今日已经抽了'}}{{ totalSmokingCount }}次</span>
-            <el-button style="padding: 3px 0" type="text" @click="dialogVisible = true">切换日期</el-button>
-            <el-button style="padding: 3px 0" type="text" @click="addRecord">抽烟</el-button>
-          </div>
-        </div>
-        <div v-for="(record, index) in smokingRecords" :key="record" class="text item">
-          <el-tag closable @close="deleteRecord(record.date)" style="margin: 5px"
-            >{{dayjs(record.date).format('YYYY-MM-DD HH:mm')}}</el-tag
-          >
-        </div>
-      </el-card>
+      <el-row :gutter="10">
+        <el-col :xs="24" :xl="24"
+          ><el-card class="box-card">
+            <div slot="header" class="clearfix">
+              <div>
+                <span
+                  >{{dayjs(calendarValue).format('YYYY-MM-DD')+'抽烟记录,今日已经抽了'}}{{ totalSmokingCount }}次</span
+                >
+                <el-button style="padding: 3px 0" type="text" @click="dialogVisible = true">切换日期</el-button>
+                <el-button style="padding: 3px 0" type="text" @click="addRecord">抽烟</el-button>
+              </div>
+            </div>
+            <div v-for="(record, index) in smokingRecords" :key="record" class="text item">
+              <el-tag closable @close="deleteRecord(record.date)" style="margin: 5px"
+                >{{dayjs(record.date).format('YYYY-MM-DD HH:mm')}}</el-tag
+              >
+            </div>
+          </el-card></el-col
+        >
+      </el-row>
 
-      <el-dialog title="提示" :visible.sync="dialogVisible" width="40%">
+      <el-dialog title="提示" :visible.sync="dialogVisible" :width="dialogWidth">
         <span slot="footer" class="dialog-footer">
           <el-calendar v-model="calendarValue" v-if="dialogVisible">
             <template slot="dateCell" slot-scope="{date, data}">
@@ -51,7 +58,8 @@
                 {{ data.day.split('-').slice(1).join('-') }} {{ data.isSelected ? '✔️' : ''}}
               </p>
               <p :class="data.isSelected ? 'is-selected' : ''">
-                {{ getHistoryCount(dayjs(date).format('YYYY-MM-DD')) > 0 ? `抽了${getHistoryCount(dayjs(date).format('YYYY-MM-DD'))}支`: ''}}
+                {{ getHistoryCount(dayjs(date).format('YYYY-MM-DD')) > 0 ?
+                `抽了${getHistoryCount(dayjs(date).format('YYYY-MM-DD'))}支`: ''}}
               </p>
             </template>
           </el-calendar>
@@ -75,9 +83,17 @@
           if (!this.smokingRecords) return 0
           return this.smokingRecords.length
         },
+        dialogWidth() {
+          // 根据设备屏幕宽度设置不同的宽度值
+          if (window.innerWidth < 768) {
+            return '100%' // 移动设备的宽度值
+          } else {
+            return '60%' // PC设备的宽度值
+          }
+        },
       },
       mounted: function () {
-        dayjs.locale('zh-cn');
+        dayjs.locale('zh-cn')
         this.loadRecordsFromLocalStorage(dayjs(this.calendarValue).format('YYYY-MM-DD'))
       },
       watch: {
@@ -87,8 +103,8 @@
           this.smokingRecords = this.getSomkingRecords()
           const res = JSON.parse(localStorage.getItem(`smokingRecords-${date}`))
           console.log(res, date)
-          if(res instanceof Array) {
-            if(res.length === 0) {
+          if (res instanceof Array) {
+            if (res.length === 0) {
               localStorage.removeItem(`smokingRecords-${date}`)
             }
           }
