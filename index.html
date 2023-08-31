@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <!-- 本地版本 -->
+    <!-- <link rel="stylesheet" type="text/css" href="../css/element-ui.css" />
+  <script src="../js/vue.js"></script>
+  <script src="../js/element-ui.js"></script> -->
+
+    <!-- 联网版本 -->
+    <!-- 引入elementui样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css" />
+    <!-- 必须先引入vue，再引入elementui -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.9"></script>
+    <!-- 引入elementui组件库-->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/dayjs/1.11.7/dayjs.min.js"></script>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+      body {
+        padding: 20px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="app">
+      <el-card class="box-card">
+        <div slot="header" class="clearfix">
+          <div>
+            <span>{{dayjs(calendarValue).format('YYYY-MM-DD')+'抽烟记录,今日已经抽了'}}{{ totalSmokingCount }}次</span>
+            <el-button style="padding: 3px 0" type="text" @click="dialogVisible = true">切换日期</el-button>
+            <el-button style="padding: 3px 0" type="text" @click="addRecord">抽烟</el-button>
+          </div>
+        </div>
+        <div v-for="(record, index) in smokingRecords" :key="record" class="text item">
+          <el-tag closable @close="deleteRecord(record.date)" style="margin: 5px"
+            >{{dayjs(record.date).format('YYYY-MM-DD HH:mm')}}</el-tag
+          >
+        </div>
+      </el-card>
+
+      <el-dialog title="提示" :visible.sync="dialogVisible" width="40%">
+        <span slot="footer" class="dialog-footer">
+          <el-calendar v-model="calendarValue" v-if="dialogVisible">
+            <template slot="dateCell" slot-scope="{date, data}">
+              <p :class="data.isSelected ? 'is-selected' : ''">
+                {{ data.day.split('-').slice(1).join('-') }} {{ data.isSelected ? '✔️' : ''}}
+              </p>
+              <p :class="data.isSelected ? 'is-selected' : ''">
+                {{ getHistoryCount(dayjs(date).format('YYYY-MM-DD')) > 0 ? `抽了${getHistoryCount(dayjs(date).format('YYYY-MM-DD'))}支`: ''}}
+              </p>
+            </template>
+          </el-calendar>
+        </span>
+      </el-dialog>
+    </div>
+  </body>
+  <script>
+    dayjs.locale('zh-cn')
+    new Vue({
+      el: '#app',
+      data() {
+        return {
+          calendarValue: new Date(),
+          smokingRecords: [],
+          dialogVisible: false,
+        }
+      },
+      computed: {
+        totalSmokingCount: function () {
+          if (!this.smokingRecords) return 0
+          return this.smokingRecords.length
+        },
+      },
+      mounted: function () {
+        dayjs.locale('zh-cn');
+        this.loadRecordsFromLocalStorage(dayjs(this.calendarValue).format('YYYY-MM-DD'))
+      },
+      watch: {
+        calendarValue: function (val) {
+          let date = dayjs(val).format('YYYY-MM-DD')
+          this.loadRecordsFromLocalStorage(date)
+          this.smokingRecords = this.getSomkingRecords()
+          const res = JSON.parse(localStorage.getItem(`smokingRecords-${date}`))
+          console.log(res, date)
+          if(res instanceof Array) {
+            if(res.length === 0) {
+              localStorage.removeItem(`smokingRecords-${date}`)
+            }
+          }
+        },
+      },
+      methods: {
+        addRecord: function () {
+          var currentDate = new Date()
+          var record = { date: currentDate.toISOString() }
+          this.smokingRecords.push(record)
+          this.saveRecordsToLocalStorage(dayjs(this.calendarValue).format('YYYY-MM-DD'))
+        },
+        loadRecordsFromLocalStorage: function (date) {
+          var savedRecords = localStorage.getItem(`smokingRecords-${date}`)
+          this.smokingRecords = JSON.parse(savedRecords) || []
+        },
+        saveRecordsToLocalStorage: function (date) {
+          var recordsToSave = JSON.stringify(this.smokingRecords)
+          localStorage.setItem(`smokingRecords-${date}`, recordsToSave)
+        },
+        deleteRecord(date) {
+          this.smokingRecords = this.smokingRecords.filter((record) => {
+            return record.date !== date
+          })
+          this.saveRecordsToLocalStorage(dayjs(this.calendarValue).format('YYYY-MM-DD'))
+        },
+        getHistoryCount(date) {
+          var savedRecords = localStorage.getItem(`smokingRecords-${date}`)
+          if (!savedRecords) return ''
+          return JSON.parse(savedRecords).length
+        },
+        getSomkingRecords() {
+          return localStorage.getItem(`smokingRecords-${dayjs(this.calendarValue).format('YYYY-MM-DD')}`)
+            ? JSON.parse(localStorage.getItem(`smokingRecords-${dayjs(this.calendarValue).format('YYYY-MM-DD')}`))
+            : []
+        },
+      },
+    })
+  </script>
+</html>
